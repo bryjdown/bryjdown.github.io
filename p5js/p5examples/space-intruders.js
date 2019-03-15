@@ -29,6 +29,7 @@ function setup() {
   var cnv = createCanvas(window.innerWidth, window.innerHeight);
   cnv.style('display', 'block');
 
+  aliens = [];
   alienRows = int( (height / ALIEN_HEIGHT) / 4);
   aliensPerRow = int( (width / ALIEN_WIDTH) / 4);
   numAliens = alienRows * aliensPerRow;
@@ -107,8 +108,7 @@ function cullObjects() {
 }
 
 function keyPressed(){
-  setup();
-  //restart = true;
+  restart = true;
 }
 
 class player{
