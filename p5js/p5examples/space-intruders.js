@@ -17,12 +17,13 @@ let aliensPerRow;
 let alienImage;
 
 let numAliens;
-let alienYOffset = 0;
-let speedMult = 1;
-let dir = 1;
+let alienYOffset;
+let speedMult;
+let dir;
 
 let changeDir = false;
 let lost = false;
+let restart = false;
 
 function setup() {
   p5.disableFriendlyErrors = true;
@@ -33,6 +34,10 @@ function setup() {
   aliensPerRow = int( (width / ALIEN_WIDTH) / 4);
   numAliens = alienRows * aliensPerRow;
   alienImage = loadImage("spacealien.png");
+  alienYOffset = 0;
+  speedMult = 1;
+  dir = 1;
+  changeDir = false;
 
   ply = new player();
 
@@ -62,19 +67,28 @@ function draw() {
   }
 
   if(lost){
-    textSize(128);
-    textAlign(CENTER);
-    stroke(30, 255, 30);
-    fill(30, 255, 30);
-    text("YOU DIED", ply.x, height/2);
+    stroke(0);
+    fill(255);
+    text("YOU DIED", width/2, height/2);
+    textSize(16);
+    text("Press any key to play again.", width/2, (height/2) + 50);
+    if(restart){
+      setup();
+    }
   }
   else if(aliens.length == 0){
-    textSize(128);
-    textAlign(CENTER);
-    text("YOU WON!", ply.x, height/2);
+    stroke(0);
+    fill(255);
+    text("YOU WON", width/2, height/2);
+    textSize(16);
+    text("Press any key to play again.", width/2, (height/2) + 50);
+    if(restart){
+      setup();
+    }
   }
 
   cullObjects();
+  restart = false;
 }
 
 //Probably could just cull objects in draw().
@@ -91,6 +105,10 @@ function cullObjects() {
       speedMult += 4 / numAliens;
     }
   }
+}
+
+function keyPressed(){
+  restart = true;
 }
 
 class player{
