@@ -12,6 +12,8 @@ let b;
 let lscore = 0;
 let rscore = 0;
 
+let restart = false;
+
 function setup() {
   var cnv = createCanvas(window.innerWidth, window.innerHeight);
   cnv.style('display', 'block');
@@ -21,6 +23,9 @@ function setup() {
   lp = new lpaddle(50, 50);
   rp = new rpaddle(width-50, 50);
   b = new ball(width/2, height/2);
+
+  lscore = 0;
+  rscore = 0;
 }
 
 function draw() {
@@ -37,6 +42,33 @@ function draw() {
   textSize(32);
   textAlign(CENTER);
   text(scores, width/2, 50);
+
+  if(lscore >= 5){
+    stroke(0);
+    fill(255);
+    text("YOU WON", width/2, height/2);
+    textSize(16);
+    text("Press any key to play again.", width/2, (height/2) + 50);
+    if(restart){
+      setup();
+    }
+  }
+  else if(rscore >= 5){
+    stroke(0);
+    fill(255);
+    text("YOU LOST", width/2, height/2);
+    textSize(16);
+    text("Press any key to play again.", width/2, (height/2) + 50);
+    if(restart){
+      setup();
+    }
+  }
+
+  restart = false;
+}
+
+function keyPressed(){
+  restart = true;
 }
 
 class lpaddle{
