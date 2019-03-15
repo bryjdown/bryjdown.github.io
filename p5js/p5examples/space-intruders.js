@@ -26,7 +26,6 @@ let lost = false;
 let restart = false;
 
 function setup() {
-  p5.disableFriendlyErrors = true;
   var cnv = createCanvas(window.innerWidth, window.innerHeight);
   cnv.style('display', 'block');
 
@@ -108,7 +107,8 @@ function cullObjects() {
 }
 
 function keyPressed(){
-  restart = true;
+  setup();
+  //restart = true;
 }
 
 class player{
