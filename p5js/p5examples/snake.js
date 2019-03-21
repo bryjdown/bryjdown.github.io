@@ -13,7 +13,7 @@ function setup() {
 }
 
 function draw() {
-  background(0, 0, 0, 25);
+  background(0, 0, 0, 255);
   snk.show();
   snk.update();
   fd.show();
@@ -66,23 +66,23 @@ class snake{
   }
 
   update(){
-    if(keyIsDown(LEFT_ARROW) && this.xdir == 0){
-      this.xdir = -1;
-      this.ydir = 0;
-    }
-    else if(keyIsDown(RIGHT_ARROW) && this.xdir == 0){
-      this.xdir = 1;
-      this.ydir = 0;
-    }
-    else if(keyIsDown(DOWN_ARROW) && this.ydir == 0){
-      this.xdir = 0;
-      this.ydir = 1;
-    }
-    else if(keyIsDown(UP_ARROW) && this.ydir == 0){
-      this.xdir = 0;
-      this.ydir = -1;
-    }
     if(this.lastmove >= F_PER_MOVE - score / 50){
+      if(keyIsDown(LEFT_ARROW) && this.xdir == 0){
+        this.xdir = -1;
+        this.ydir = 0;
+      }
+      else if(keyIsDown(RIGHT_ARROW) && this.xdir == 0){
+        this.xdir = 1;
+        this.ydir = 0;
+      }
+      else if(keyIsDown(DOWN_ARROW) && this.ydir == 0){
+        this.xdir = 0;
+        this.ydir = 1;
+      }
+      else if(keyIsDown(UP_ARROW) && this.ydir == 0){
+        this.xdir = 0;
+        this.ydir = -1;
+      }
       this.move(this.xdir, this.ydir);
       this.checkCollisions();
       this.lastmove = 0;
@@ -133,15 +133,25 @@ class food{
   }
 
   update(){
-    if(this.x >= snk.head().x            &&
-       this.x <= snk.head().x + SEG_SIZE &&
-       this.y >= snk.head().y            &&
-       this.y <= snk.head().y + SEG_SIZE)
-       {
-         snk.addSegment();
-         this.x = random(SEG_SIZE, width-SEG_SIZE);
-         this.y = random(SEG_SIZE, height-SEG_SIZE);
-         score++;
+    if(this.checkCollisions()){
+      snk.addSegment();
+      this.respawn();
+      score++;
+    }
+  }
+
+  checkCollisions(){
+    if(dist(this.x, this.y, snk.head().x + SEG_SIZE / 2, snk.head().y + SEG_SIZE / 2) <= SEG_SIZE / 1.5){
+         return true;
        }
+    else{return false;}
+  }
+
+  respawn(){
+    this.x = random(SEG_SIZE, width-SEG_SIZE);
+    this.y = random(SEG_SIZE, height-SEG_SIZE);
+    if(this.checkCollisions()){
+      this.respawn();
+    }
   }
 }
