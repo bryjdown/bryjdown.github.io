@@ -1,6 +1,6 @@
 let PLY_WIDTH = 50;
 let PLY_HEIGHT = 25;
-let PLY_SPEED = 10;
+let PLY_SPEED = 3;
 let PROJ_SPEED = 20;
 let FIRE_DELAY = 50;
 
