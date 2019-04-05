@@ -118,6 +118,7 @@ class player{
   }
 
   update(){
+    this.mvspeed = PLY_SPEED * speedMult;
     //Movement.
     if(keyIsDown(LEFT_ARROW) && this.x > 0){
       this.x -= this.mvspeed;
