@@ -1,6 +1,6 @@
 
 let BUMPER_OVERHANG = 1;
-let BUMPER_SPEED = 12;
+let BUMPER_SPEED = 10;
 let BASE_GAP;
 
 let ply;
@@ -10,6 +10,7 @@ let layerSpawnDelay = 100;
 let lastSpawn = 0;
 let gameSpeed = 1;
 let gameOver = false;
+let mouseEnabled = false;
 let score = 0;
 
 function setup(){
@@ -64,6 +65,12 @@ function draw(){
   }
 }
 
+function keyPressed(){
+  if(keyCode == TAB){
+    mouseEnabled = !mouseEnabled;
+  }
+}
+
 function displayScore(){
   push();
   stroke(255);
@@ -71,6 +78,10 @@ function displayScore(){
   textSize(32);
   textAlign(CENTER);
   text(score, width/2, 50);
+  textAlign(LEFT);
+  textSize(16);
+  noStroke();
+  text("Press TAB to toggle mouse controls.", 10, 20);
   pop();
 }
 
@@ -87,14 +98,24 @@ function displayGameOver(){
 }
 
 function updateInput(){
-  if(keyIsDown(RIGHT_ARROW)){
-    for(var bl of bumperLayers){
-      bl.move(BUMPER_SPEED * gameSpeed, -1);
+  if(mouseEnabled){
+    var dir = map(mouseX, 0, width, -1.35, 1.35);
+    if(abs(dir) > 0.1){
+      for(var bl of bumperLayers){
+        bl.move(BUMPER_SPEED * gameSpeed, dir);
+      }
     }
   }
-  else if(keyIsDown(LEFT_ARROW)){
-    for(var bl of bumperLayers){
-      bl.move(BUMPER_SPEED * gameSpeed, 1);
+  else{
+    if(keyIsDown(RIGHT_ARROW)){
+      for(var bl of bumperLayers){
+        bl.move(BUMPER_SPEED * gameSpeed, -1);
+      }
+    }
+    else if(keyIsDown(LEFT_ARROW)){
+      for(var bl of bumperLayers){
+        bl.move(BUMPER_SPEED * gameSpeed, 1);
+      }
     }
   }
 }
@@ -151,11 +172,11 @@ class BumperLayer {
   }
 
   move(spd, dir){
-    if(dir == -1 && this.bumpers[0].x2 >= 0){
+    if(dir < 0 && this.bumpers[0].x2 >= 0){
       this.bumpers[0].move(spd * dir);
       this.bumpers[1].move(spd * dir);
     }
-    else if(dir == 1 && this.bumpers[1].x1 <= width){
+    else if(dir > 0 && this.bumpers[1].x1 <= width){
       this.bumpers[0].move(spd * dir);
       this.bumpers[1].move(spd * dir);
     }
@@ -175,7 +196,8 @@ class Bumper {
 
   show(){
     push();
-    stroke(255);
+    colorMode(HSB);
+    stroke(map(this.y, 0, height, 0, 256), 100, 100);
     strokeWeight(6);
     line(this.x1, this.y, this.x2, this.y);
     pop();
