@@ -1,9 +1,10 @@
-let MAX_PARTICLE_SPLITS = 3;
+let MAX_SPLITS = 3;
 let NUM_SHRAPNEL = 2;
 let MAX_PARTICLE_SPEED = 20;
 let MIN_PARTICLE_SPEED = 3;
 let FRICTION_MULT = .999;
 let GRAVITY_ACCEL = .10;
+let PARTICLE_SIZE = 16;
 
 let interfaceIsHidden = false;
 let randomizer;
@@ -20,11 +21,11 @@ function setup() {
   hiderSetup();
   showerSetup();
 
-  particles[0] = new Particle(width/2, height/2, 16, 0);
+  particles.push(new Particle(width/2, height/2, PARTICLE_SIZE, 0));
 }
 
 function draw() {
-  background(0, 0, 0, 175);
+  background(0);
 
   for (var i = 0; i < particles.length; i++){
     particles[i].update();
@@ -96,35 +97,25 @@ class Particle {
   }
 
   explode() {
-    if(this.numParents < MAX_PARTICLE_SPLITS){
+    if(this.numParents < MAX_SPLITS){
+      //The combined area of resulting shrapnel is equal to the area of the parent.
+      let sz = (this.r / 2) * 1.41421;
+      console.log(this.r, NUM_SHRAPNEL);
       for(let i = 0; i < NUM_SHRAPNEL; i++) {
-        var shrap = new Particle(this.x, this.y, this.r / 1.25, this.numParents + 1);
+        var shrap = new Particle(this.x, this.y, sz, this.numParents + 1);
         particles.push(shrap);
       }
-    }
-  }
-
-
-}
-
-function mousePressed(){
-  var xbound = randomizer.x + randomizer.width;
-  var ybound = randomizer.y + randomizer.height;
-  if((mouseX > xbound || mouseY > ybound) || interfaceIsHidden){
-    for(let i = 0; i < 3; i++){
-      var nP = new Particle(mouseX, mouseY, 16, 0);
-      particles.push(nP);
     }
   }
 }
 
 function randomizerSetup(){
   randomizer = new Clickable();
-  randomizer.locate(20, 10);
+  randomizer.locate(20, 40);
   randomizer.width = 100;
   randomizer.height = 50;
   randomizer.cornerRadius = 3;
-  randomizer.text = "Randomize Physics";
+  randomizer.text = "Randomize";
   randomizer.textColor = '#ffffff';
   randomizer.color = color('rgba(130, 130, 130, 0.5)');
   randomizer.onPress = function(){
@@ -137,13 +128,13 @@ function randomizerSetup(){
 
 function hiderSetup(){
   hider = new Clickable();
-  hider.locate(20, 70);
+  hider.locate(20, 10);
   hider.width = 100;
   hider.height = 20;
   hider.cornerRadius = 3;
   hider.text = "Hide";
-  hider.textColor = '#ffffff';
-  hider.color = color('rgba(130, 130, 130, 0.5)');
+  hider.textColor = '#cccccc';
+  hider.color = color('rgba(100, 100, 100, 0.4)');
   hider.onPress = function(){
     interfaceIsHidden = true;
   };
@@ -151,7 +142,7 @@ function hiderSetup(){
 
 function showerSetup(){
   shower = new Clickable();
-  shower.locate(10, 10);
+  shower.locate(20, 10);
   shower.width = 40;
   shower.height = 20;
   shower.text = "+";
@@ -174,6 +165,19 @@ function showInterface(){
   text("Friction: " + nf(FRICTION_MULT, 1, 3), 130, 60);
   text("Gravity: " + nf(GRAVITY_ACCEL, 1, 3), 130, 80);
   pop();
+}
+
+function mousePressed(){
+  var outsideInterface = mouseX > 230 || mouseY > 90;
+  var outsideShower = mouseX > 50 || mouseY > 30;
+
+  //Only spawn particles if the cursor is not within an interface.
+  if(outsideInterface || (outsideShower && interfaceIsHidden)){
+    for(let i = 0; i < 3; i++){
+      var nP = new Particle(mouseX, mouseY, PARTICLE_SIZE, 0);
+      particles.push(nP);
+    }
+  }
 }
 
 function windowResized() {
