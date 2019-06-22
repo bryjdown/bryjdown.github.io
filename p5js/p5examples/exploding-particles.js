@@ -1,15 +1,26 @@
+let MAX_PARTICLE_SPLITS = 3;
+let NUM_SHRAPNEL = 2;
+let MAX_PARTICLE_SPEED = 20;
+let MIN_PARTICLE_SPEED = 3;
+let FRICTION_MULT = .999;
+let GRAVITY_ACCEL = .10;
+
+let interfaceIsHidden = false;
+let randomizer;
+let hider;
+let shower;
 let particles = [];
-let shrapnel = [];
-var friction = .996;
-var gravity = .12;
-var topspeed = 20;
 
 function setup() {
   var cnv = createCanvas(window.innerWidth, window.innerHeight);
   cnv.style('display', 'block');
+  colorMode(HSB);
   background(0);
+  randomizerSetup();
+  hiderSetup();
+  showerSetup();
 
-  particles[0] = new Particle(width/2, height/2, 16);
+  particles[0] = new Particle(width/2, height/2, 16, 0);
 }
 
 function draw() {
@@ -25,41 +36,42 @@ function draw() {
     }
   }
 
-  for (var i = 0; i < shrapnel.length; i++){
-    shrapnel[i].update();
-    shrapnel[i].show();
-
-    if( !shrapnel[i].isUseful ) {
-      shrapnel.splice(i, 1);
-    }
+  if(interfaceIsHidden){
+    shower.draw();
+  }
+  else{
+    showInterface();
   }
 }
 
 class Particle {
 
-  constructor(x, y, r) {
+  constructor(x, y, r, numParents) {
     this.x = x;
     this.y = y;
     this.r = r;
-    this.velocity = createVector(random(-10, 10), random(-10, 10));
+    var bound = MAX_PARTICLE_SPEED;
+    this.velocity = createVector(random(-bound, bound), random(-bound, bound));
     this.speed = sqrt( pow(this.velocity.x, 2) + pow(this.velocity.y, 2) );
     this.isUseful = true;
+    this.numParents = numParents;
 
-    this.col = color(random(170, 255), random(170, 255), random(170, 255));
-    this.rcol = color(this.col.levels[0], this.col.levels[1], this.col.levels[2]);
+    this.col = random(360);
+    this.sat = 100;
+    this.curSat = this.sat;
   }
 
   show() {
-    stroke(this.rcol);
     strokeWeight(this.r/2);
-    noFill();
+    stroke(this.col, this.curSat, 100);
+    fill(this.col, this.curSat, 100);
     ellipse(this.x,this.y,this.r,this.r);
   }
 
   update() {
-    this.velocity.x *= friction;
-    this.velocity.y *= friction;
-    this.velocity.y += gravity;
+    this.velocity.x *= FRICTION_MULT;
+    this.velocity.y *= FRICTION_MULT;
+    this.velocity.y += GRAVITY_ACCEL;
 
     this.x += this.velocity.x;
     this.y += this.velocity.y;
@@ -68,35 +80,102 @@ class Particle {
     this.y = constrain(this.y, this.r, height - this.r);
 
     if (this.x <= this.r || this.x >= width - this.r) {
-      this.velocity.x *= -0.93;
+      this.velocity.x *= -0.90;
     }
     if (this.y <= this.r || this.y >= height - this.r) {
-      this.velocity.y *= -0.93;
+      this.velocity.y *= -0.90;
     }
 
-    this.speed = constrain(sqrt( pow(this.velocity.x, 2) + pow(this.velocity.y, 2) ), 0, topspeed);
+    this.speed = constrain(sqrt( pow(this.velocity.x, 2) + pow(this.velocity.y, 2) ), 0, MAX_PARTICLE_SPEED);
 
-    this.rcol.levels[0] = this.col.levels[0] * map(this.speed, 0, topspeed, 0.6, 1);
-    this.rcol.levels[1] = this.col.levels[1] * map(this.speed, 0, topspeed, 0.6, 1);
-    this.rcol.levels[2] = this.col.levels[2] * map(this.speed, 0, topspeed, 0.6, 1);
+    this.curSat = this.sat * map(this.speed, MIN_PARTICLE_SPEED, MAX_PARTICLE_SPEED, 1, 0);
 
-    if (this.speed <= 1) {
+    if (this.speed <= MIN_PARTICLE_SPEED) {
       this.isUseful = false;
     }
   }
 
   explode() {
-    for(let i = 0; i < 3; i++) {
-      var shrap = new Particle(this.x, this.y, this.r / 2);
-      shrapnel.push(shrap);
+    if(this.numParents < MAX_PARTICLE_SPLITS){
+      for(let i = 0; i < NUM_SHRAPNEL; i++) {
+        var shrap = new Particle(this.x, this.y, this.r / 1.25, this.numParents + 1);
+        particles.push(shrap);
+      }
     }
-
   }
 
 
 }
 
 function mousePressed(){
-  var nP = new Particle(mouseX, mouseY, 16);
-  particles.push(nP);
+  var xbound = randomizer.x + randomizer.width;
+  var ybound = randomizer.y + randomizer.height;
+  if((mouseX > xbound || mouseY > ybound) || interfaceIsHidden){
+    for(let i = 0; i < 3; i++){
+      var nP = new Particle(mouseX, mouseY, 16, 0);
+      particles.push(nP);
+    }
+  }
+}
+
+function randomizerSetup(){
+  randomizer = new Clickable();
+  randomizer.locate(20, 10);
+  randomizer.width = 100;
+  randomizer.height = 50;
+  randomizer.cornerRadius = 3;
+  randomizer.text = "Randomize Physics";
+  randomizer.textColor = '#ffffff';
+  randomizer.color = color('rgba(130, 130, 130, 0.5)');
+  randomizer.onPress = function(){
+    MAX_PARTICLE_SPEED = random(15, 25);
+    MIN_PARTICLE_SPEED = random(0.5, 4);
+    FRICTION_MULT = random(.994, .9999);
+    GRAVITY_ACCEL = random(-0.2, 0.2);
+  };
+}
+
+function hiderSetup(){
+  hider = new Clickable();
+  hider.locate(20, 70);
+  hider.width = 100;
+  hider.height = 20;
+  hider.cornerRadius = 3;
+  hider.text = "Hide";
+  hider.textColor = '#ffffff';
+  hider.color = color('rgba(130, 130, 130, 0.5)');
+  hider.onPress = function(){
+    interfaceIsHidden = true;
+  };
+}
+
+function showerSetup(){
+  shower = new Clickable();
+  shower.locate(10, 10);
+  shower.width = 40;
+  shower.height = 20;
+  shower.text = "+";
+  shower.textColor = '#ffffff';
+  shower.color = color('rgba(100, 100, 100, 0.4)');
+  shower.onPress = function(){
+    interfaceIsHidden = false;
+  }
+}
+
+function showInterface(){
+  randomizer.draw();
+  hider.draw();
+
+  push();
+  fill(255);
+  textAlign(LEFT);
+  text("Max Speed: " + nf(MAX_PARTICLE_SPEED, 2, 3), 130, 20);
+  text("Min Speed: " + nf(MIN_PARTICLE_SPEED, 1, 3), 130, 40);
+  text("Friction: " + nf(FRICTION_MULT, 1, 3), 130, 60);
+  text("Gravity: " + nf(GRAVITY_ACCEL, 1, 3), 130, 80);
+  pop();
+}
+
+function windowResized() {
+  resizeCanvas(window.innerWidth, window.innerHeight);
 }
