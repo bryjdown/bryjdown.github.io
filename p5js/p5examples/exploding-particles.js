@@ -100,7 +100,7 @@ class Particle {
     if(this.numParents < MAX_SPLITS){
       //The combined area of resulting shrapnel is equal to the area of the parent.
       let sz = (this.r / 2) * 1.41421;
-      console.log(this.r, NUM_SHRAPNEL);
+
       for(let i = 0; i < NUM_SHRAPNEL; i++) {
         var shrap = new Particle(this.x, this.y, sz, this.numParents + 1);
         particles.push(shrap);
