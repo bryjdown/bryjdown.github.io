@@ -89,7 +89,7 @@ class Particle {
 
     this.speed = constrain(sqrt( pow(this.velocity.x, 2) + pow(this.velocity.y, 2) ), 0, MAX_PARTICLE_SPEED);
 
-    this.curSat = this.sat * map(this.speed, MIN_PARTICLE_SPEED, MAX_PARTICLE_SPEED, 1, 0);
+    this.curSat = this.sat * map(this.speed, MIN_PARTICLE_SPEED, MAX_PARTICLE_SPEED, 0, 1.3);
 
     if (this.speed <= MIN_PARTICLE_SPEED) {
       this.isUseful = false;
