@@ -1,6 +1,8 @@
-let CELL_SIZE = 32;
-let mainGrid;
+const CELL_SIZE = 32;
+const MIN_COST = 1;
+const MAX_COST = 100;
 
+let mainGrid;
 let frontier;
 let start;
 let goal;
@@ -14,53 +16,60 @@ function setup() {
   cnv.style('display', 'block');
   background(0);
 
-  mainGrid = new Matrix();
-  start = mainGrid.cells[0];
-  goal = mainGrid.cells[mainGrid.width * mainGrid.height - 1];
-  frontier = new PriorityQueue((a, b) => a[1] > b[1]);
-  frontier.push([start, 0]);
-  visited = [];
-  visited[0] = true;
+  buildMatrix();
 }
 
 function draw() {
   background(0);
   mainGrid.show();
+
   push();
   stroke(255);
   strokeWeight(7);
   textAlign(CENTER);
-  text("Click and drag to create obstacles. Press SPACE to begin pathfinding. Press R to reset.", width/2, 20);
+  text("Click and drag to create obstacles. Press SPACE to start/stop pathfinding. Press R to reset.", width/2, 20);
   pop();
 
   if(beginSearch == true && !searchFinished){
-    searchFinished = search();
+    search();
   }
 }
 
 function keyPressed(){
   if(keyCode == 32){
-    beginSearch = true;
+    beginSearch = !beginSearch;
   }
   if(keyCode == 82){
-    mainGrid = new Matrix();
-    start = mainGrid.cells[0];
-    goal = mainGrid.cells[mainGrid.width * mainGrid.height - 1];
-    frontier = new PriorityQueue((a, b) => a[1] > b[1]);
-    frontier.push([start, 0]);
-    visited = [];
-    visited[0] = true;
-    beginSearch = false;
-    searchFinished = false;
+    buildMatrix();
   }
 }
 
 function mouseDragged(){
+  //Approximate the cell being moused over.
   let x = floor(mouseX / CELL_SIZE);
   let y = floor(mouseY / CELL_SIZE);
   let index = x + (y * mainGrid.width);
   mainGrid.cells[index].enabled = false;
   mainGrid.cells[index].color = color(0, 0, 0);
+}
+
+function buildMatrix(){
+  mainGrid = new Matrix();
+  //Ensure the starting node is enabled.
+  start = mainGrid.cells[0];
+  start.enabled = true;
+  start.color = color(200, 255, 200);
+  //Ensure the goal node is enabled.
+  goal = mainGrid.cells[mainGrid.width * mainGrid.height - 1];
+  goal.enabled = true;
+  goal.color = color(255, 200, 200);
+  //Frontier contains the nodes to-be-evaluated, with the lowest-cost nodes first.
+  frontier = new PriorityQueue((a, b) => a[1] > b[1]);
+  frontier.push([start, 0]);
+  visited = [];
+  visited[0] = true;
+  beginSearch = false;
+  searchFinished = false;
 }
 
 function search(){
@@ -70,25 +79,29 @@ function search(){
   if(current == goal){
     current.color = color(0, 0, 255);
     current.show();
-    return 1;
+    searchFinished = true;
+    return;
   }
 
   for(let neighbor of current.neighbors){
+    //Grab the actual neighbor cell based on its index.
     let next = mainGrid.cells[neighbor];
     if(visited[neighbor] != true && next.enabled){
-      frontier.push([next, -heuristic(next, goal)]);
-      //console.log(heuristic(next, goal));
+      //Add each unvisited neighbor to the priority queue.
+      frontier.push([next, heuristic(next, goal)]);
       visited[neighbor] = true;
       next.color = color(0, 255, 0);
     }
   }
 
-  return 0;
+  if(frontier.isEmpty()){
+    searchFinished = true;
+    return;
+  }
 }
 
 function heuristic(a, b){
-  //return abs(a.x - b.x) + abs(a.y - b.y);
-  return dist(a.x, a.y, b.x, b.y);
+  return -(abs(a.x - b.x) + abs(a.y - b.y)) - a.cost;
 }
 
 class Cell{
@@ -96,9 +109,11 @@ class Cell{
     this.x = x;
     this.y = y;
     this.index = index;
-    this.color = color(255, 255, 255);
+    this.cost = floor(random(MIN_COST, MAX_COST));
+    //Color the node based on its cost. Nodes with cost > 80 are obstacles.
+    this.color = this.cost > 80 ? 0 : map(this.cost, MIN_COST, MAX_COST, 255, 100);
+    this.enabled = this.cost > 80 ? false : true;
     this.neighbors = [];
-    this.enabled = true;
   }
 
   show(){
@@ -119,6 +134,7 @@ class Matrix{
     this.height = floor(height / CELL_SIZE);
 
     let cellCount = 0;
+    //Some weirdness here to orient the cell indices correctly left-to-right.
     for(let i = 0; i < this.height; i++){
       for(let j = 0; j < this.width; j++){
         this.cells.push(new Cell(j*CELL_SIZE, i*CELL_SIZE, cellCount));
@@ -142,15 +158,19 @@ class Matrix{
         this.cells[cellCount].neighbors = [];
 
         let curCol = cellCount % this.width;
+        //Attempt to add the left neighbor.
         if(curCol > 0){
           this.cells[cellCount].neighbors.push(cellCount - 1);
         }
+        //Attempt to add the right neighbor.
         if(curCol < this.width - 1){
           this.cells[cellCount].neighbors.push(cellCount + 1);
         }
+        //Attempt to add the top neighbor.
         if(cellCount - this.width >= 0){
           this.cells[cellCount].neighbors.push(cellCount - this.width);
         }
+        //Attempt to add the bottom neighbor.
         if(cellCount + this.width <= (this.width * this.height) - 1){
           this.cells[cellCount].neighbors.push(cellCount + this.width);
         }
