@@ -1,3 +1,5 @@
+const GROW_SPD = 0.002;
+
 let spheres = [];
 let xdetail = 16;
 let ydetail = 10;
@@ -71,7 +73,7 @@ class partySphere{
     this.sat = 100;
     this.brt = 100;
     this.grow = true;
-    this.growSpeed = (0.001 * range) + (0.001 * log(size));
+    this.growSpeed = (GROW_SPD * range) + (GROW_SPD * log(size));
     //Signifies CURRENT rotation.
     this.rotation = [xRot, yRot, zRot];
     //Rotation speed.
@@ -83,6 +85,7 @@ class partySphere{
 
   show(){
     push();
+    scale(0.5);
     //Rotating x, y, z.
     rotateX(this.rotation[0]);
     rotateY(this.rotation[1]);
